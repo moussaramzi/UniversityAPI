@@ -1,11 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using University.DAL.Data;
+using University.DAL;
 using University.DAL.Dtos;
 using University.DAL.Models;
 
@@ -15,36 +12,58 @@ namespace University.API.Controllers
     [ApiController]
     public class InstructorsController : ControllerBase
     {
-        private readonly UniversityContext _context;
+        private readonly IRepository<Instructor> _instructorRepository;
 
-        public InstructorsController(UniversityContext context)
+        public InstructorsController(IRepository<Instructor> instructorRepository)
         {
-            _context = context;
+            _instructorRepository = instructorRepository;
         }
 
         [HttpGet]
         public async Task<ActionResult<IEnumerable<InstructorDto>>> GetInstructors()
         {
-            var instructors = await _context.Instructors
-                .Include(i => i.CoursesTaught)
-                .Select(i => new InstructorDto
-                {
-                    InstructorID = i.InstructorID,
-                    Name = i.Name,
-                    Department = i.Department,
-                    CoursesTaught = i.CoursesTaught.Select(c => new CourseDto
-                    {
-                        CourseID = c.CourseID,
-                        Title = c.Title
-                    }).ToList()
-                }).ToListAsync();
+            var instructors = await _instructorRepository.GetAsync(
+                includes: i => i.CoursesTaught
+            );
 
-            return Ok(instructors);
+            var instructorDtos = instructors.Select(i => new InstructorDto
+            {
+                InstructorID = i.InstructorID,
+                Name = i.Name,
+                Department = i.Department,
+                CoursesTaught = i.CoursesTaught.Select(c => new CourseDto
+                {
+                    CourseID = c.CourseID,
+                    Title = c.Title
+                }).ToList()
+            });
+
+            return Ok(instructorDtos);
         }
 
-        private bool InstructorExists(int id)
+        [HttpGet("{id}")]
+        public async Task<ActionResult<InstructorDto>> GetInstructorById(int id)
         {
-            return _context.Instructors.Any(e => e.InstructorID == id);
+            
+
+            var instructor = await _instructorRepository.GetAsync(
+                filter: i => i.InstructorID == id,
+                includes: i => i.CoursesTaught
+            );
+
+            var instructorDto = instructor.Select(i => new InstructorDto
+            {
+                InstructorID = i.InstructorID,
+                Name = i.Name,
+                Department = i.Department,
+                CoursesTaught = i.CoursesTaught.Select(c => new CourseDto
+                {
+                    CourseID = c.CourseID,
+                    Title = c.Title
+                }).ToList()
+            }).FirstOrDefault();
+
+            return Ok(instructorDto);
         }
     }
 }

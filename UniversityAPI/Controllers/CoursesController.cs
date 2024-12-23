@@ -8,6 +8,7 @@ using Microsoft.EntityFrameworkCore;
 using University.DAL.Data;
 using University.DAL.Models;
 using University.DAL.Dtos;
+using University.DAL;
 
 namespace University.API.Controllers
 {
@@ -15,46 +16,32 @@ namespace University.API.Controllers
     [ApiController]
     public class CoursesController : ControllerBase
     {
-        private readonly UniversityContext _context;
+        private readonly IRepository<Course> _courseRepository;
 
-        public CoursesController(UniversityContext context)
+        public CoursesController(IRepository<Course> courseRepository)
         {
-            _context = context;
+            _courseRepository = courseRepository;
         }
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<CourseDto>>> GetCourses()
+        public async Task<ActionResult<IEnumerable<Course>>> GetCourses()
         {
-            var courses = await _context.Courses
-                .Include(c => c.EnrolledStudents)
-                .Include(c => c.Instructors)
-                .Select(c => new CourseDto
-                {
-                    CourseID = c.CourseID,
-                    Title = c.Title,
-                    Schedule = c.Schedule,
-                    Capacity = c.Capacity,
-                    RegisteredStudents = c.RegisteredStudents,
-                    Instructors = c.Instructors.Select(i => new InstructorDto
-                    {
-                        InstructorID = i.InstructorID,
-                        Name = i.Name,
-                        Department = i.Department
-                    }).ToList(),
-                    EnrolledStudents = c.EnrolledStudents.Select(s => new StudentDto
-                    {
-                        StudentID = s.StudentID,
-                        Name = s.Name
-                    }).ToList()
-                }).ToListAsync();
-
+            var courses = await _courseRepository.GetAsync(null, null, c => c.EnrolledStudents, c => c.Instructors);
             return Ok(courses);
+        }
+
+        [HttpGet("{id}")]
+        public async Task<ActionResult<Course>> GetCourseById(int id)
+        {
+            var course = await _courseRepository.GetByIDAsync(id);
+            if (course == null)
+            {
+                return NotFound();
+            }
+            return Ok(course);
         }
     
 
-    private bool CourseExists(int id)
-        {
-            return _context.Courses.Any(e => e.CourseID == id);
-        }
+    
     }
 }
