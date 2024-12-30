@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using University.DAL.Models;
 
 namespace University.DAL.Data
@@ -27,17 +25,17 @@ namespace University.DAL.Data
 
             var courses = new List<Course>
             {
-                new Course { Title = "Introduction to Programming", Schedule = "Mon/Wed 10-11 AM", Capacity = 30, RegisteredStudents = 0 },
-                new Course { Title = "Calculus 101", Schedule = "Tue/Thu 2-3 PM", Capacity = 25, RegisteredStudents = 0 },
-                new Course { Title = "Physics 101", Schedule = "Fri 1-3 PM", Capacity = 20, RegisteredStudents = 0 }
+                new Course { Title = "Introduction to Programming", Category = "Computer Science", Capacity = 30, RegisteredStudents = 0 },
+                new Course { Title = "Calculus 101", Category = "Mathematics", Capacity = 25, RegisteredStudents = 0 },
+                new Course { Title = "Physics 101", Category = "Physics", Capacity = 20, RegisteredStudents = 0 }
             };
 
             var students = new List<Student>
             {
-                new Student { Name = "Alice" },
-                new Student { Name = "Bob" },
-                new Student { Name = "Charlie" },
-                new Student { Name = "Diana" }
+                new Student { FirstName = "Alice", LastName = "Johnson", StudentMail = "alice.johnson@example.com" },
+                new Student { FirstName = "Bob", LastName = "Smith", StudentMail = "bob.smith@example.com" },
+                new Student { FirstName = "Charlie", LastName = "Brown", StudentMail = "charlie.brown@example.com" },
+                new Student { FirstName = "Diana", LastName = "White", StudentMail = "diana.white@example.com" }
             };
 
             context.Instructors.AddRange(instructors);

@@ -75,6 +75,12 @@ namespace University.DAL
             _table.Attach(obj);
             _context.Entry(obj).State = EntityState.Modified;
         }
+        public async Task UpdateAsync(T entity)
+        {
+            _context.Set<T>().Update(entity);
+            await _context.SaveChangesAsync();
+        }
+
 
         public void Delete(int id)
         {
