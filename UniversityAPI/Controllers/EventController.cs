@@ -27,6 +27,17 @@ namespace UniversityAPI.Controllers
 
             return Ok(events);
         }
+
+        [HttpGet("{id}")]
+        public async Task<ActionResult<Event>> GetEventById(int id)
+        {
+            var events = await _eventRepository.GetByIDAsync(id);
+            if (events == null)
+            {
+                return NotFound();
+            }
+            return Ok(events);
+        }
     }
 
 }

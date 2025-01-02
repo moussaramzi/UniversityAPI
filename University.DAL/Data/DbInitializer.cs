@@ -38,9 +38,19 @@ namespace University.DAL.Data
                 new Student { FirstName = "Diana", LastName = "White", StudentMail = "diana.white@example.com" }
             };
 
+            var events = new List<Event>
+            {
+                new Event { eventName = "Hackathon React", date = DateTime.Parse("2025-12-12"), time = "12:00" },
+                new Event { eventName = "AI Conference", date = DateTime.Parse("2025-10-05"), time = "09:00" },
+                new Event { eventName = "Tech Meetup", date = DateTime.Parse("2025-07-18"), time = "18:00" },
+                new Event { eventName = "Startup Pitch", date = DateTime.Parse("2025-03-22"), time = "15:00" }
+            };
+
+
             context.Instructors.AddRange(instructors);
             context.Courses.AddRange(courses);
             context.Students.AddRange(students);
+            context.Events.AddRange(events);
             context.SaveChanges();
 
             // Establish relationships
