@@ -39,55 +39,75 @@ namespace University.API.Controllers
             return Ok(student.FirstOrDefault());
         }
 
-        [HttpPost("enroll")]
-        public async Task<IActionResult> EnrollStudent([FromBody] EnrollmentRequest request)
+       [HttpPost("enroll")]
+public async Task<IActionResult> EnrollStudent([FromBody] EnrollmentRequest request)
+{
+    // Check if the student exists
+    var student = await _studentRepository.GetAsync(
+        filter: s => s.StudentID == request.StudentId,
+        includes: s => s.EnrolledCourses
+    );
+
+    Student studentEntity;
+
+    if (student == null || !student.Any())
+    {
+        // Create a new student if not found
+        studentEntity = new Student
         {
-            var student = await _studentRepository.GetAsync(
-                filter: s => s.StudentID == request.StudentId,
-                includes: s => s.EnrolledCourses
-            );
+            FirstName = request.FirstName,
+            LastName = request.LastName,
+            StudentMail = request.StudentMail,
+        };
+        
+        _studentRepository.Insert(studentEntity);
+        
+        // Save changes to ensure StudentID is generated
+        await _studentRepository.SaveChangesAsync();
+    }
+    else
+    {
+        studentEntity = student.First();
+    }
 
-            if (student == null || !student.Any())
-            {
-                return NotFound(new { message = "Student not found" });
-            }
+    var errors = new List<string>();
+    var successes = new List<string>();
 
-            var studentEntity = student.First();
-            var errors = new List<string>();
-            var successes = new List<string>();
+    // Enroll the student in the specified courses
+    foreach (var courseTitle in request.CourseTitles)
+    {
+        var course = await _courseRepository.GetAsync(filter: c => c.Title == courseTitle);
 
-            foreach (var courseTitle in request.CourseTitles)
-            {
-                var course = await _courseRepository.GetAsync(filter: c => c.Title == courseTitle);
-
-                if (course == null || !course.Any())
-                {
-                    errors.Add($"Course '{courseTitle}' not found");
-                    continue;
-                }
-
-                var courseEntity = course.First();
-
-                if (studentEntity.EnrolledCourses.Any(c => c.CourseID == courseEntity.CourseID))
-                {
-                    errors.Add($"Student is already enrolled in '{courseTitle}'");
-                    continue;
-                }
-
-                studentEntity.EnrolledCourses.Add(courseEntity);
-                courseEntity.RegisteredStudents++;
-                successes.Add(courseTitle);
-            }
-
-            await _studentRepository.UpdateAsync(studentEntity);
-
-            return Ok(new
-            {
-                message = $"Enrollment completed",
-                successes,
-                errors
-            });
+        if (course == null || !course.Any())
+        {
+            errors.Add($"Course '{courseTitle}' not found");
+            continue;
         }
+
+        var courseEntity = course.First();
+
+        if (studentEntity.EnrolledCourses.Any(c => c.CourseID == courseEntity.CourseID))
+        {
+            errors.Add($"Student is already enrolled in '{courseTitle}'");
+            continue;
+        }
+
+        studentEntity.EnrolledCourses.Add(courseEntity);
+        courseEntity.RegisteredStudents++;
+        successes.Add(courseTitle);
+    }
+
+    // Update the student with the new enrollments
+    await _studentRepository.UpdateAsync(studentEntity);
+
+    return Ok(new
+    {
+        message = "Enrollment completed",
+        successes,
+        errors
+    });
+}
+
 
     }
 }

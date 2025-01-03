@@ -17,6 +17,8 @@ namespace University.DAL
                            Func<IQueryable<T>, IOrderedQueryable<T>> orderBy = null,
                            params Expression<Func<T, object>>[] includes);
         void Insert(T obj);
+        Task SaveChangesAsync();
+
         Task UpdateAsync(T entity);
         void Delete(int id);
     }
