@@ -52,29 +52,42 @@ namespace University.API.Controllers
                 return NotFound(new { message = "Student not found" });
             }
 
-            var course = await _courseRepository.GetAsync(
-                filter: c => c.Title == request.CourseTitle
-            );
-
-            if (course == null || !course.Any())
-            {
-                return NotFound(new { message = "Course not found" });
-            }
-
             var studentEntity = student.First();
-            var courseEntity = course.First();
+            var errors = new List<string>();
+            var successes = new List<string>();
 
-            if (studentEntity.EnrolledCourses.Any(c => c.CourseID == courseEntity.CourseID))
+            foreach (var courseTitle in request.CourseTitles)
             {
-                return Conflict(new { message = "Student is already enrolled in this course" });
-            }
+                var course = await _courseRepository.GetAsync(filter: c => c.Title == courseTitle);
 
-            studentEntity.EnrolledCourses.Add(courseEntity);
-            courseEntity.RegisteredStudents++;
+                if (course == null || !course.Any())
+                {
+                    errors.Add($"Course '{courseTitle}' not found");
+                    continue;
+                }
+
+                var courseEntity = course.First();
+
+                if (studentEntity.EnrolledCourses.Any(c => c.CourseID == courseEntity.CourseID))
+                {
+                    errors.Add($"Student is already enrolled in '{courseTitle}'");
+                    continue;
+                }
+
+                studentEntity.EnrolledCourses.Add(courseEntity);
+                courseEntity.RegisteredStudents++;
+                successes.Add(courseTitle);
+            }
 
             await _studentRepository.UpdateAsync(studentEntity);
 
-            return Ok(new { message = $"Student {studentEntity.FirstName} successfully enrolled in {courseEntity.Title}" });
+            return Ok(new
+            {
+                message = $"Enrollment completed",
+                successes,
+                errors
+            });
         }
+
     }
 }
